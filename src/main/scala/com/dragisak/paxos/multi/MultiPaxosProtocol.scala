@@ -22,19 +22,19 @@ case class Decision(s: Long, p: Command)
 
 case class Response(cid: Long, result: Result)
 
-case class PValue(b: String, s: Long, p: Command)
+case class PValue(b: Ballot, s: Long, p: Command)
 
-case class Phase1a(l: ActorRef, b: String)
+case class Phase1a(l: ActorRef, b: Ballot)
 
-case class Phase1b(l: ActorRef, b: String, accepted: Set[PValue])
+case class Phase1b(l: ActorRef, b: Ballot, accepted: Set[PValue])
 
 case class Phase2a(l: ActorRef, pValue: PValue)
 
-case class Phase2b(l: ActorRef, b: String)
+case class Phase2b(l: ActorRef, b: Ballot)
 
-case class Preempted(b: String)
+case class Preempted(b: Ballot)
 
-case class Adopted(b: String, pValues: Set[PValue])
+case class Adopted(b: Ballot, pValues: Set[PValue])
 
 
 case class Ballot(leader: Int, ballot: Long) extends Ordered[Ballot] {
@@ -43,6 +43,8 @@ case class Ballot(leader: Int, ballot: Long) extends Ordered[Ballot] {
     case x if x == 0 => (this.ballot - that.ballot).toInt
     case x => x
   }
+
+  def increment = copy(ballot = ballot + 1)
 
 }
 

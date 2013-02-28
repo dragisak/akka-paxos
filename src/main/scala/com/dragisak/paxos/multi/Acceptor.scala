@@ -2,9 +2,9 @@ package com.dragisak.paxos.multi
 
 import akka.actor._
 
-class Acceptor extends Actor with ActorLogging{
+class Acceptor extends Actor with ActorLogging {
 
-  var ballotNumber = ""
+  var ballotNumber = Ballot(-1, -1)
   var accepted = Set[PValue]()
 
   def receive = {

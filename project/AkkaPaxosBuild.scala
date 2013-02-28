@@ -3,8 +3,10 @@ import sbt.Keys._
 
 object AkkaPaxosBuild extends Build {
 
+  val akkaVersion = "2.1.1"
+
   lazy val akkapaxos = Project(
-    id = "akkapaxos",
+    id = "akka-paxos",
     base = file("."),
     settings = Project.defaultSettings ++ Seq(
       name := "AkkaPaxos",
@@ -13,7 +15,11 @@ object AkkaPaxosBuild extends Build {
       scalaVersion := "2.10.0",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases",
-      libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.1.0"
+      libraryDependencies ++= Seq(
+        "com.typesafe.akka" %%  "akka-actor"       % akkaVersion,
+        "com.typesafe.akka" %%  "akka-slf4j"       % akkaVersion,
+        "ch.qos.logback"    %   "logback-classic"  % "1.0.9"
+      )
     )
   )
 }

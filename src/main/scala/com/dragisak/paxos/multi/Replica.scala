@@ -2,7 +2,7 @@ package com.dragisak.paxos.multi
 
 import akka.actor.{ActorLogging, Actor}
 
-class Replica(val numLeaders: Int) extends Actor with ActorLogging{
+class Replica(val numLeaders: Int) extends Actor with ActorLogging {
 
   lazy val leaders = (0 until numLeaders).map(i => context.actorFor("../leader-" + i)).toSet
 
@@ -39,19 +39,15 @@ class Replica(val numLeaders: Int) extends Actor with ActorLogging{
   }
 
   private def send(dest: String, response: Response) {
-    log.info("Got " + response)
     //context.actorFor(dest) ! response
 
   }
 
   def receive = {
 
-    case Request(p) =>
-      log.info("Got " + p)
-      propose(p)
+    case Request(p) => propose(p)
 
-    case d @ Decision(_, p) => {
-      log.info("Got " + d)
+    case d@Decision(_, p) => {
 
       decisions = decisions + d
 
@@ -64,11 +60,9 @@ class Replica(val numLeaders: Int) extends Actor with ActorLogging{
 
           perform(p1)
       }
-
     }
 
-    case GetState =>
-      sender ! state
+    case GetState => sender ! state
 
   }
 

@@ -5,7 +5,7 @@ import akka.actor._
 class Scout(
   val l: ActorRef,
   val acceptors: Set[ActorRef],
-  val b: String
+  val b: Ballot
 ) extends Actor with ActorLogging{
 
   var waitFor = acceptors

@@ -11,7 +11,6 @@ class Commander(
 
   var waitFor = acceptors
 
-
   override def preStart = acceptors.foreach(_ ! Phase2a(self, pValue))
 
 
@@ -22,8 +21,8 @@ class Commander(
         waitFor = waitFor - a
         if (waitFor.size < acceptors.size/2) {
           replicas.foreach(_ ! Decision(pValue.s, pValue.p))
+          self ! PoisonPill
         }
-        self ! PoisonPill
       } else {
         l !  Preempted(b1)
         self ! PoisonPill

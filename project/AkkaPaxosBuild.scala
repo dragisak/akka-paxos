@@ -11,7 +11,7 @@ object AkkaPaxosBuild extends Build {
     settings = Project.defaultSettings ++ Seq(
       name := "AkkaPaxos",
       organization := "com.dragisak",
-      version := "0.1-SNAPSHOT",
+      version := "0.1",
       scalaVersion := "2.10.0",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases",

@@ -4,7 +4,7 @@ import akka.actor._
 
 class Acceptor extends Actor with ActorLogging {
 
-  var ballotNumber = Ballot(-1, -1)
+  var ballotNumber = Ballot(-1, -1, self)
   var accepted = Set[PValue]()
 
   def receive = {

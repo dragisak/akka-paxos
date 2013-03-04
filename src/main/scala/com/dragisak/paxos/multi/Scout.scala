@@ -3,7 +3,6 @@ package com.dragisak.paxos.multi
 import akka.actor._
 
 class Scout(
-  val l: ActorRef,
   val acceptors: Set[ActorRef],
   val b: Ballot
 ) extends Actor with ActorLogging{
@@ -22,11 +21,11 @@ class Scout(
         waitFor = waitFor - a
 
         if (waitFor.size < acceptors.size /2) {
-          l ! Adopted(b, pValues)
+          context.parent ! Adopted(b, pValues)
           self ! PoisonPill
         }
       } else {
-        l ! Preempted(b1)
+        context.parent ! Preempted(b1)
         self ! PoisonPill
       }
 

@@ -3,7 +3,6 @@ package com.dragisak.paxos.multi
 import akka.actor._
 
 class Commander(
-  val l: ActorRef,
   val acceptors: Set[ActorRef],
   val replicas: Set[ActorRef],
   val pValue: PValue
@@ -24,9 +23,8 @@ class Commander(
           self ! PoisonPill
         }
       } else {
-        l !  Preempted(b1)
+        context.parent !  Preempted(b1)
         self ! PoisonPill
-
       }
 
   }

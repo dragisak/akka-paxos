@@ -14,23 +14,25 @@ object HelloPaxos extends App {
 
   val crashes = 20
   val cntLeaders = 10
+  val messages = 1000
 
   val acceptors = (for (i <- 0 until crashes * 2 + 1) yield (system.actorOf(Props[Acceptor], name = "acceptor-" + i))).toSet
   val replicas = (for (i <- 0 until crashes + 1) yield (system.actorOf(Props(new Replica(cntLeaders)), name = "replica-" + i))).toSet
   val leaders = for (i <- 0 until cntLeaders) yield (system.actorOf(Props(new Leader(i, acceptors, replicas)), name = "leader-" + i))
 
 
-  for (i <- 0 until 100) {
+  for (i <- 0 until messages) {
     val req = Request(Command("yo", i, Operation(i.toString)))
     replicas.foreach(_ ! req)
   }
 
-  Thread.sleep(2000)
+  Thread.sleep(5000)
 
   val res = Future.sequence(replicas.toSeq.map(r => (r ? GetState).mapTo[Seq[Operation]])).onSuccess {
     case s => {
-      s.foreach(o => println(o.map(_.id).mkString(",")))
+     // s.foreach(o => println(o.map(_.id).mkString(",")))
       assert(s.toSet.size == 1, "All replicas must receive same sequence of events")
+      assert(s.head.size == messages, "Expected %d messages but received %d".format (messages, s.head.size))
     }
   }
 

@@ -1,6 +1,7 @@
 package com.dragisak.paxos.multi
 
 import akka.actor.ActorRef
+import compat.Platform
 
 case class Operation(id: String) {
   def execute = Result(id)
@@ -37,7 +38,7 @@ case class Preempted(b: Ballot)
 case class Adopted(b: Ballot, pValues: Set[PValue])
 
 
-case class Ballot(leader: Int, ballot: Long) extends Ordered[Ballot] {
+case class Ballot(leader: Int, ballot: Long, l: ActorRef) extends Ordered[Ballot] {
 
   def compare(that: Ballot) = (this.leader - that.leader) match {
     case x if x == 0 => (this.ballot - that.ballot).toInt
@@ -45,7 +46,10 @@ case class Ballot(leader: Int, ballot: Long) extends Ordered[Ballot] {
   }
 
   def increment = copy(ballot = ballot + 1)
-
 }
 
-object GetState
+case object GetState
+
+case object Ping
+case object Pong
+case class Timeout(b: Ballot)

@@ -12,7 +12,7 @@ object AkkaPaxosBuild extends Build {
       name := "AkkaPaxos",
       organization := "com.dragisak",
       version := "0.2-SNAPSHOT",
-      scalaVersion := "2.10.0",
+      scalaVersion := "2.10.1",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       resolvers += "Typesafe Releases" at "http://repo.typesafe.com/typesafe/releases",
       libraryDependencies ++= Seq(

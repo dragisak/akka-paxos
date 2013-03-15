@@ -3,7 +3,7 @@ import sbt.Keys._
 
 object AkkaPaxosBuild extends Build {
 
-  val akkaVersion = "2.1.1"
+  val akkaVersion = "2.1.2"
 
   lazy val akkapaxos = Project(
     id = "akka-paxos",

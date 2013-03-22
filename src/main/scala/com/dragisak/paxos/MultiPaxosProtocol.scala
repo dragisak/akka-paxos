@@ -1,4 +1,4 @@
-package com.dragisak.paxos.multi
+package com.dragisak.paxos
 
 import akka.actor.ActorRef
 import compat.Platform
@@ -50,6 +50,6 @@ case class Ballot(leader: Int, ballot: Long, l: ActorRef) extends Ordered[Ballot
 
 case object GetState
 
-case object Ping
-case object Pong
+case class Ping(b: Ballot)
+case class Pong(b: Ballot)
 case class Timeout(b: Ballot)

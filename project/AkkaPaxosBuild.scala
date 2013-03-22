@@ -18,7 +18,9 @@ object AkkaPaxosBuild extends Build {
       libraryDependencies ++= Seq(
         "com.typesafe.akka" %%  "akka-actor"       % akkaVersion,
         "com.typesafe.akka" %%  "akka-slf4j"       % akkaVersion,
-        "ch.qos.logback"    %   "logback-classic"  % "1.0.9"
+        "ch.qos.logback"    %   "logback-classic"  % "1.0.9",
+        "org.scalatest"     %%  "scalatest"        % "1.9.1" % "test",
+        "org.mockito"       %   "mockito-core"     % "1.9.5" % "test"
       )
     )
   )

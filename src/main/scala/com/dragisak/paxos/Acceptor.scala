@@ -1,13 +1,15 @@
-package com.dragisak.paxos.multi
+package com.dragisak.paxos
 
 import akka.actor._
+import akka.event.LoggingReceive
 
 class Acceptor extends Actor with ActorLogging {
 
   var ballotNumber = Ballot(-1, -1, self)
   var accepted = Set[PValue]()
 
-  def receive = {
+  def receive = LoggingReceive {
+
 
     case Phase1a(l, b) =>
       if (b > ballotNumber) {
@@ -15,9 +17,9 @@ class Acceptor extends Actor with ActorLogging {
       }
       l ! Phase1b(self, ballotNumber, accepted)
 
-    case Phase2a(l, pValue@PValue(b, s, p)) =>
-      if (b >= ballotNumber) {
-        ballotNumber = b
+    case Phase2a(l, pValue) =>
+      if (pValue.b >= ballotNumber) {
+        ballotNumber = pValue.b
         accepted = accepted + pValue
       }
       l ! Phase2b(self, ballotNumber)

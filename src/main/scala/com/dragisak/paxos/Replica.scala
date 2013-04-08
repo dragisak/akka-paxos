@@ -12,28 +12,31 @@ class Replica(val numLeaders: Int) extends Actor with ActorLogging {
 
   var slotNum = 1L
 
-  var proposals = Set[Proposal]()
+  var proposals = Map[Long, Proposal]()
 
-  var decisions = Set[Decision]()
+  var decisions = Map[Long, Command]()
 
   def propose(p: Command) {
 
     if (!alreadyDecided(p, slotNum)) {
-      val s1 = maxSeenSoFar  + 1L
-      val proposal = Proposal(s1, p)
-      proposals = proposals + proposal
+      maxSeenSoFar = maxSeenSoFar + 1L
+      val proposal = Proposal(maxSeenSoFar, p)
+
+      proposals = proposals + (proposal.s -> proposal)
 
       leaders foreach (_ ! proposal)
     }
   }
 
-  def maxSeenSoFar = (proposals.map(_.s) ++ decisions.map(_.s) + 0L).max
+  var maxSeenSoFar = 0L
 
-  def alreadyDecided(command:Command, slotNo:Long) = decisions contains Decision(slotNo, command)
+  def alreadyDecided(command: Command, slotNo: Long) = decisions.contains(slotNo)
 
   private def performAndIncrement(slot: Long, p: Command): Long = {
     log.debug("Performing {} on {}", p, slot)
-    decisions.find(d => d.p == p && d.s < slot) match {
+    decisions.find {
+      case (s: Long, c: Command) => c == p && s < slot
+    } match {
       case Some(_) => slot + 1L
       case None =>
         log.debug("Add state {}", p.op)
@@ -56,38 +59,26 @@ class Replica(val numLeaders: Int) extends Actor with ActorLogging {
 
     case d: Decision => {
 
-      decisions = decisions + d
+      decisions = decisions + (d.s -> d.p)
+      if (maxSeenSoFar < d.s) maxSeenSoFar = d.s
 
       log.debug("Got decision {} current slot {}", d, slotNum)
 
 
-      @tailrec def loop(slot: Long, cmds: Set[Command]): Long = {
-        if (cmds.isEmpty) slot
-        else {
-          val c = cmds.head // there should be no two commands with same slot
-
+      @tailrec def loop(slot: Long, cmd: Option[Command]): Long = cmd match {
+        case None => slot
+        case Some(c) =>
           for (
-            Proposal(_, p2) <- proposals.find(prop => prop.s == slot && prop.p != c)
+            Proposal(_, p2) <- proposals.get(slot) if p2 != c
           ) yield propose(p2)
 
           val newSlotNum = performAndIncrement(slot, c)
-          loop(newSlotNum, decisions.filter(_.s == newSlotNum).map(_.p))
-        }
+          loop(newSlotNum, decisions.get(newSlotNum))
       }
 
 
-      slotNum = loop(slotNum, decisions.filter(_.s == slotNum).map(_.p))
+      slotNum = loop(slotNum, decisions.get(slotNum))
 
-      /*
-      decisions.filter(_.s == slotNum) foreach {
-        case Decision(_, p1) =>
-          for (
-            Proposal(_, p2) <- proposals.find(prop => prop.s == slotNum && prop.p != p1)
-          ) yield propose(p2)
-
-          perform(p1)
-      }
-       */
     }
 
     case GetState => sender ! state

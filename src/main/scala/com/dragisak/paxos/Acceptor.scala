@@ -6,7 +6,7 @@ import akka.event.LoggingReceive
 class Acceptor extends Actor with ActorLogging {
 
   var ballotNumber = Ballot(-1, -1, self)
-  var accepted = Set[PValue]()
+  var accepted = Map[Long, PValue]()
 
   def receive = LoggingReceive {
 
@@ -15,12 +15,12 @@ class Acceptor extends Actor with ActorLogging {
       if (b > ballotNumber) {
         ballotNumber = b
       }
-      l ! Phase1b(self, ballotNumber, accepted)
+      l ! Phase1b(self, ballotNumber, accepted.get(ballotNumber.ballot))
 
     case Phase2a(l, pValue) =>
       if (pValue.b >= ballotNumber) {
         ballotNumber = pValue.b
-        accepted = accepted + pValue
+        accepted = accepted + (ballotNumber.ballot -> pValue)
       }
       l ! Phase2b(self, ballotNumber)
   }

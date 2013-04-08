@@ -5,7 +5,7 @@ import Scout._
 
 class Scout(
   val acceptors: Set[ActorRef],
-  val b:         Ballot
+  val b: Ballot
 ) extends Actor with LoggingFSM[ScoutState, ScoutData] {
 
   override def preStart = acceptors.foreach(_ ! Phase1a(self, b))
@@ -17,7 +17,7 @@ class Scout(
 
       val newData = data ++ r - a
 
-      if (newData.waitFor.size * 2 < acceptors.size ) {
+      if (newData.waitFor.size * 2 < acceptors.size) {
         context.parent ! Adopted(b, newData.pValues)
         stop()
       } else {
@@ -34,12 +34,15 @@ class Scout(
 sealed trait ScoutState
 
 object Scout {
+
   case object RUNNING extends ScoutState
 
-  case class ScoutData (waitFor: Set[ActorRef], pValues: Set[PValue] = Set()) {
-    def ++(vals: Iterable[PValue])  = copy(pValues = pValues ++ vals)
-    def -(a :ActorRef) = copy(waitFor = waitFor - a)
+  case class ScoutData(waitFor: Set[ActorRef], pValues: Set[PValue] = Set()) {
+    def ++(vals: Iterable[PValue]) = copy(pValues = pValues ++ vals)
+
+    def -(a: ActorRef) = copy(waitFor = waitFor - a)
   }
+
 }
 
 

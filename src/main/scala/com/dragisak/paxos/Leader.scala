@@ -30,6 +30,7 @@ class Leader(
       goto(Active) using LeaderData(b, props)
 
     case Event(Preempted(b1), data) if b1 > data.ballot =>
+      log.info("{} Preempted({})", stateName, b1)
       val ballotNum = data.ballot.increment
       spawnScout(ballotNum)
       //spawnPoller(b1)
@@ -45,6 +46,7 @@ class Leader(
 
 
     case Event(Preempted(b1), data) if b1 > data.ballot =>
+      log.info("{} Preempted({}", stateName, b1)
       val ballotNum = data.ballot.increment
       spawnScout(ballotNum)
       //spawnPoller(b1)

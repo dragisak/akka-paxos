@@ -1,4 +1,4 @@
-package com.dragisak.paxos
+package akkapaxos
 
 import akka.actor.{ActorLogging, Actor}
 import akka.event.LoggingReceive

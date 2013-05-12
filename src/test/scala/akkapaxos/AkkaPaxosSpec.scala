@@ -1,8 +1,7 @@
-package com.dragisak
+package akkapaxos
 
 import akka.actor._
 import akka.pattern.ask
-import paxos._
 import scala.concurrent.duration._
 import akka.util.Timeout
 import concurrent.{Await, Future}
@@ -17,7 +16,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
   implicit val timeout = Timeout(20 seconds)
   implicit val ec = system.dispatcher
 
-  def this() = this(ActorSystem("MySpec"))
+  def this() = this(ActorSystem("AkkaPaxosSpec"))
 
 
   override def afterAll {
@@ -26,7 +25,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
   "all replicas" must {
     "receive all messages in same order" in {
-      val crashes = 4
+      val crashes = 6
       val cntLeaders = 5
       val messages = 1000
 

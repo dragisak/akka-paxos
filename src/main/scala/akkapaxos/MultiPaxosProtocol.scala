@@ -1,4 +1,4 @@
-package com.dragisak.paxos
+package akkapaxos
 
 import akka.actor.ActorRef
 
@@ -53,4 +53,4 @@ case class Ping(b: Ballot)
 
 case class Pong(b: Ballot)
 
-case class Timeout(b: Ballot)
+case class ProtocolTimedOut(b: Ballot)

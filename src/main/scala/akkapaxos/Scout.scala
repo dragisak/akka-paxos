@@ -43,6 +43,8 @@ object Scout {
     def ++(vals: Iterable[PValue]) = copy(pValues = pValues ++ vals)
 
     def -(a: ActorRef) = copy(waitFor = waitFor - a)
+
+    override def toString = s"waitFo:$waitFor, pBalues.size:${pValues.size}"
   }
 
 }

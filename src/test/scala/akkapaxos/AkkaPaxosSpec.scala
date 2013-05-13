@@ -40,7 +40,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
         replicas.foreach(_ ! req)
       }
 
-      Thread.sleep(25000)
+      Thread.sleep(20000)
 
       val res = Await.result(Future.sequence(replicas.toSeq.map(r => (r ? GetState).mapTo[Seq[Operation]])), 20.seconds)
 

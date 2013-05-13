@@ -34,7 +34,9 @@ class Acceptor extends Actor with LoggingFSM[AcceptorState, AcceptorData] {
   }
 }
 
-case class AcceptorData(ballot: Ballot, accepted: Map[BallotNumber, PValue])
+case class AcceptorData(ballot: Ballot, accepted: Map[BallotNumber, PValue]) {
+  override def toString = s"ballot:$ballot, accepted.size:${accepted.size}"
+}
 
 sealed trait AcceptorState
 

@@ -34,7 +34,9 @@ case class Phase2b(l: ActorRef, b: Ballot)
 
 case class Preempted(b: Ballot)
 
-case class Adopted(b: Ballot, pValues: Set[PValue])
+case class Adopted(b: Ballot, pValues: Set[PValue]) {
+  override def toString = s"b:$b, pValues.size:${pValues.size}"
+}
 
 case class BallotNumber(leader: Int, number: Long)  extends Ordered[BallotNumber] {
 

@@ -8,7 +8,9 @@ class Scout(
   val b: Ballot
 ) extends Actor with LoggingFSM[ScoutState, ScoutData] {
 
-  override def preStart = acceptors.foreach(_ ! Phase1a(self, b))
+  override def preStart() {
+    acceptors.foreach(_ ! Phase1a(self, b))
+  }
 
   startWith(RUNNING, ScoutData(acceptors))
 

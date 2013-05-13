@@ -36,15 +36,24 @@ case class Preempted(b: Ballot)
 
 case class Adopted(b: Ballot, pValues: Set[PValue])
 
+case class BallotNumber(leader: Int, number: Long)  extends Ordered[BallotNumber] {
 
-case class Ballot(leader: Int, ballot: Long, l: ActorRef) extends Ordered[Ballot] {
-
-  def compare(that: Ballot) = (this.leader - that.leader) match {
-    case x if x == 0 => (this.ballot - that.ballot).toInt
-    case x => x
+  override def compare(that: BallotNumber) = (this.number - that.number) match {
+    case 0l   ⇒ this.leader - that.leader
+    case x    ⇒ x.toInt
   }
 
-  def increment = copy(ballot = ballot + 1)
+  def increment = copy(number = number + 1)
+
+  override def toString = s"$number-$leader"
+}
+
+case class Ballot(ballotNumber: BallotNumber, l: ActorRef) extends Ordered[Ballot] {
+
+  override def compare(that: Ballot) = this.ballotNumber.compare(that.ballotNumber)
+
+  def increment = copy(ballotNumber = ballotNumber.increment)
+
 }
 
 case object GetState

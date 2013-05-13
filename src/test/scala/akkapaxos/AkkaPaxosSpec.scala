@@ -13,13 +13,13 @@ import org.scalatest.BeforeAndAfterAll
 class AkkaPaxosSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with WordSpec with MustMatchers with BeforeAndAfterAll {
 
-  implicit val timeout = Timeout(20 seconds)
+  implicit val timeout = Timeout(5 seconds)
   implicit val ec = system.dispatcher
 
   def this() = this(ActorSystem("AkkaPaxosSpec"))
 
 
-  override def afterAll {
+  override def afterAll() {
     system.shutdown()
   }
 
@@ -27,22 +27,20 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
     "receive all messages in same order" in {
       val crashes = 6
       val cntLeaders = 5
-      val messages = 1000
+      val messages = 10000
 
-      val acceptors = (for (i <- 0 until crashes * 2 + 1) yield (system.actorOf(Props[Acceptor], name = s"acceptor-${i}"))).toSet
-      val replicas = (for (i <- 0 until crashes + 1) yield (system.actorOf(Props(new Replica(cntLeaders)), name = s"replica-${i}"))).toSet
-      val leaders = for (i <- 0 until cntLeaders) yield (system.actorOf(Props(new Leader(i, acceptors, replicas)), name = s"leader-${i}"))
+      val acceptors = (for (i <- 0 until crashes * 2 + 1) yield (system.actorOf(Props[Acceptor], name = s"acceptor-$i"))).toSet
+      val replicas = (for (i <- 0 until crashes + 1) yield (system.actorOf(Props(new Replica(cntLeaders)), name = s"replica-$i"))).toSet
+      val leaders = for (i <- 0 until cntLeaders) yield (system.actorOf(Props(new Leader(i, acceptors, replicas)), name = s"leader-$i"))
 
-      Thread.sleep(500)
+      Thread.sleep(100)
 
       for (i <- 0 until messages) {
         val req = Request(Command("yo", i, Operation(i.toString)))
         replicas.foreach(_ ! req)
       }
 
-
-      val waitTime = messages.toLong * 30
-      Thread.sleep(waitTime)
+      Thread.sleep(25000)
 
       val res = Await.result(Future.sequence(replicas.toSeq.map(r => (r ? GetState).mapTo[Seq[Operation]])), 20.seconds)
 

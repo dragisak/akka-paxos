@@ -10,9 +10,11 @@ class Leader(
 
   import Leader._
 
-  override def preStart = spawnScout(Ballot(id, 0, self))
+  override def preStart() {
+    spawnScout(Ballot(BallotNumber(id, 0), self))
+  }
 
-  startWith(Waiting, LeaderData(Ballot(id, 0, self), Map()))
+  startWith(Waiting, LeaderData(Ballot(BallotNumber(id, 0), self), Map()))
 
 
   when(Waiting) {
@@ -30,10 +32,8 @@ class Leader(
       goto(Active) using LeaderData(b, props)
 
     case Event(Preempted(b1), data) if b1 > data.ballot =>
-      log.info("{} Preempted({})", stateName, b1)
       val ballotNum = data.ballot.increment
       spawnScout(ballotNum)
-      //spawnPoller(b1)
       stay using LeaderData(ballotNum, data.proposals)
 
   }
@@ -46,10 +46,8 @@ class Leader(
 
 
     case Event(Preempted(b1), data) if b1 > data.ballot =>
-      log.info("{} Preempted({}", stateName, b1)
       val ballotNum = data.ballot.increment
       spawnScout(ballotNum)
-      //spawnPoller(b1)
       goto(Waiting) using LeaderData(ballotNum, data.proposals)
 
   }
@@ -57,16 +55,16 @@ class Leader(
   whenUnhandled {
     case m =>
       log.debug("Ignoring {}", m)
-      stay
+      stay()
   }
 
 
   private def spawnCommander(pVal: PValue) {
-    context.actorOf(Props(new Commander(acceptors, replicas, pVal)), name = s"commander-${pVal.b.ballot}-${pVal.s}")
+    context.actorOf(Props(new Commander(acceptors, replicas, pVal)), name = s"commander-${pVal.b.ballotNumber}-${pVal.s}")
   }
 
   private def spawnScout(b: Ballot) {
-    context.actorOf(Props(new Scout(acceptors, b)), name = s"scout-${b.ballot}")
+    context.actorOf(Props(new Scout(acceptors, b)), name = s"scout-${b.ballotNumber}")
   }
 
 
@@ -105,7 +103,7 @@ case class LeaderData(ballot: Ballot, proposals: Map[Long, Proposal]) {
 
   def contains(slot: Long): Boolean = proposals.contains(slot)
 
-
+  override def toString = s"Ballot: $ballot, proposal.length:${proposals.size}"
 }
 
 

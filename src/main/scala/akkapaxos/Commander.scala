@@ -9,7 +9,9 @@ class Commander(
   val pValue: PValue
 ) extends Actor with LoggingFSM[CommanderState, WaitFor] {
 
-  override def preStart = acceptors.foreach(_ ! Phase2a(self, pValue))
+  override def preStart() {
+    acceptors.foreach(_ ! Phase2a(self, pValue))
+  }
 
   startWith(RUNNING, WaitFor(acceptors))
 

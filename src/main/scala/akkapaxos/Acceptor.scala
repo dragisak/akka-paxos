@@ -1,27 +1,41 @@
 package akkapaxos
 
 import akka.actor._
-import akka.event.LoggingReceive
 
-class Acceptor extends Actor with ActorLogging {
+class Acceptor extends Actor with LoggingFSM[AcceptorState, AcceptorData] {
 
-  var ballotNumber = Ballot(-1, -1, self)
-  var accepted = Map[Long, PValue]()
+  startWith(AcceptorRunning, AcceptorData(Ballot(BallotNumber(-1, -1), self), Map()))
 
-  def receive = LoggingReceive {
+  when(AcceptorRunning) {
 
-
-    case Phase1a(l, b) =>
-      if (b > ballotNumber) {
-        ballotNumber = b
+    case Event(Phase1a(l, b), data) =>
+      val newData = if (b > data.ballot) {
+        data.copy(ballot = b)
+      } else {
+        data
       }
-      l ! Phase1b(self, ballotNumber, accepted.get(ballotNumber.ballot))
+      l ! Phase1b(self, newData.ballot, newData.accepted.get(newData.ballot.ballotNumber))
+      stay using newData
 
-    case Phase2a(l, pValue) =>
-      if (pValue.b >= ballotNumber) {
-        ballotNumber = pValue.b
-        accepted = accepted + (ballotNumber.ballot -> pValue)
+    case Event(Phase2a(l, pValue), data) =>
+      val newData = if (pValue.b >= data.ballot) {
+        AcceptorData(pValue.b, data.accepted + (pValue.b.ballotNumber -> pValue))
+      } else {
+        data
       }
-      l ! Phase2b(self, ballotNumber)
+      l ! Phase2b(self, newData.ballot)
+      stay using newData
+  }
+
+  whenUnhandled {
+    case msg =>
+      log.warning("Unhandled message {}", msg)
+      stay()
   }
 }
+
+case class AcceptorData(ballot: Ballot, accepted: Map[BallotNumber, PValue])
+
+sealed trait AcceptorState
+
+case object AcceptorRunning extends AcceptorState

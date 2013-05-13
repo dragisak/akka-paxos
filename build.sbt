@@ -15,3 +15,4 @@ libraryDependencies ++= Seq(
         "org.mockito"       %   "mockito-core"     % "1.9.5"    % "test"
 )
 
+testOptions in Test += Tests.Argument("-oDF")

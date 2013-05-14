@@ -3,21 +3,21 @@ package akkapaxos
 import akka.actor._
 import Scout._
 
-class Scout(
+class Scout[E](
   val acceptors: Set[ActorRef],
   val b: Ballot
-) extends Actor with LoggingFSM[ScoutState, ScoutData] {
+) extends Actor with LoggingFSM[ScoutState, ScoutData[E]] {
 
   override def preStart() {
     acceptors.foreach(_ ! Phase1a(self, b))
   }
 
-  startWith(RUNNING, ScoutData(acceptors))
+  startWith(RUNNING, ScoutData[E](acceptors,  Set()))
 
   when(RUNNING) {
-    case Event(Phase1b(a, b1, r), data) if b1 == b =>
+    case Event(phase1b: Phase1b[E], data) if phase1b.b == b =>
 
-      val newData = data ++ r - a
+      val newData = data ++ phase1b.accepted - phase1b.l
 
       if (newData.waitFor.size * 2 < acceptors.size) {
         context.parent ! Adopted(b, newData.pValues)
@@ -39,10 +39,10 @@ object Scout {
 
   case object RUNNING extends ScoutState
 
-  case class ScoutData(waitFor: Set[ActorRef], pValues: Set[PValue] = Set()) {
-    def ++(vals: Iterable[PValue]) = copy(pValues = pValues ++ vals)
+  case class ScoutData[E](waitFor: Set[ActorRef], pValues: Set[PValue[E]]) {
+    def ++(vals: Iterable[PValue[E]]): ScoutData[E] = copy(pValues = pValues ++ vals)
 
-    def -(a: ActorRef) = copy(waitFor = waitFor - a)
+    def -(a: ActorRef): ScoutData[E] = copy(waitFor = waitFor - a)
 
     override def toString = s"waitFo:$waitFor, pBalues.size:${pValues.size}"
   }

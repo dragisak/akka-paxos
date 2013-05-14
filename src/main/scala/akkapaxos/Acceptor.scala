@@ -2,14 +2,14 @@ package akkapaxos
 
 import akka.actor._
 
-class Acceptor extends Actor with LoggingFSM[AcceptorState, AcceptorData] {
+class Acceptor[E] extends Actor with LoggingFSM[AcceptorState, AcceptorData[E]] {
 
   startWith(AcceptorRunning, AcceptorData(Ballot(BallotNumber(-1, -1), self), Map()))
 
   when(AcceptorRunning) {
 
     case Event(Phase1a(l, b), data) =>
-      val newData = if (b > data.ballot) {
+      val newData :AcceptorData[E] = if (b > data.ballot) {
         data.copy(ballot = b)
       } else {
         data
@@ -17,13 +17,13 @@ class Acceptor extends Actor with LoggingFSM[AcceptorState, AcceptorData] {
       l ! Phase1b(self, newData.ballot, newData.accepted.get(newData.ballot.ballotNumber))
       stay using newData
 
-    case Event(Phase2a(l, pValue), data) =>
-      val newData = if (pValue.b >= data.ballot) {
-        AcceptorData(pValue.b, data.accepted + (pValue.b.ballotNumber -> pValue))
+    case Event(phase2a: Phase2a[E], data) =>
+      val newData = if (phase2a.pValue.b >= data.ballot) {
+        AcceptorData(phase2a.pValue.b, data.accepted + (phase2a.pValue.b.ballotNumber -> phase2a.pValue))
       } else {
         data
       }
-      l ! Phase2b(self, newData.ballot)
+      phase2a.l ! Phase2b(self, newData.ballot)
       stay using newData
   }
 
@@ -34,7 +34,7 @@ class Acceptor extends Actor with LoggingFSM[AcceptorState, AcceptorData] {
   }
 }
 
-case class AcceptorData(ballot: Ballot, accepted: Map[BallotNumber, PValue]) {
+case class AcceptorData[E](ballot: Ballot, accepted: Map[BallotNumber, PValue[E]]) {
   override def toString = s"ballot:$ballot, accepted.size:${accepted.size}"
 }
 

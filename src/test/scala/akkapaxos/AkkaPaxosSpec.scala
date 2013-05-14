@@ -23,26 +23,32 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
     system.shutdown()
   }
 
+  trait MyState extends DistributedState[Seq[Int], Int] {
+    override def startState = Seq()
+
+    override def append(state: => Seq[Int], event: Int) = state :+ event
+  }
+
   "all replicas" must {
     "receive all messages in same order" in {
       val crashes = 6
       val cntLeaders = 5
       val messages = 10000
 
-      val acceptors = (for (i <- 0 until crashes * 2 + 1) yield (system.actorOf(Props[Acceptor], name = s"acceptor-$i"))).toSet
-      val replicas = (for (i <- 0 until crashes + 1) yield (system.actorOf(Props(new Replica(cntLeaders)), name = s"replica-$i"))).toSet
-      val leaders = for (i <- 0 until cntLeaders) yield (system.actorOf(Props(new Leader(i, acceptors, replicas)), name = s"leader-$i"))
+      val acceptors = (for (i <- 0 until crashes * 2 + 1) yield (system.actorOf(Props[Acceptor[Int]], name = s"acceptor-$i"))).toSet
+      val replicas = (for (i <- 0 until crashes + 1) yield (system.actorOf(Props(new Replica[Seq[Int], Int](cntLeaders) with MyState), name = s"replica-$i"))).toSet
+      val leaders = for (i <- 0 until cntLeaders) yield (system.actorOf(Props(new Leader[Int](i, acceptors, replicas)), name = s"leader-$i"))
 
       Thread.sleep(100)
 
       for (i <- 0 until messages) {
-        val req = Request(Command("yo", i, Operation(i.toString)))
+        val req = Request[Int](Command("yo", i, i))
         replicas.foreach(_ ! req)
       }
 
       Thread.sleep(20000)
 
-      val res = Await.result(Future.sequence(replicas.toSeq.map(r => (r ? GetState).mapTo[Seq[Operation]])), 20.seconds)
+      val res = Await.result(Future.sequence(replicas.toSeq.map(r => (r ? GetState).mapTo[Seq[Int]])), 20.seconds)
 
       res.size must be(replicas.size)
       res.head.size must be (messages)

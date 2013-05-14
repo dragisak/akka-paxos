@@ -3,10 +3,10 @@ package akkapaxos
 import akka.actor._
 import Commander._
 
-class Commander(
+class Commander[E](
   val acceptors: Set[ActorRef],
   val replicas: Set[ActorRef],
-  val pValue: PValue
+  val pValue: PValue[E]
 ) extends Actor with LoggingFSM[CommanderState, WaitFor] {
 
   override def preStart() {

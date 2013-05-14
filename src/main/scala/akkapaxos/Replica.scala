@@ -4,19 +4,21 @@ import akka.actor.{ActorLogging, Actor}
 import akka.event.LoggingReceive
 import scala.annotation.tailrec
 
-class Replica(val numLeaders: Int) extends Actor with ActorLogging {
+class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
+
+  this: DistributedState[S, E] =>
 
   lazy val leaders = (0 until numLeaders).map(i => context.actorFor("../leader-" + i)).toSet
 
-  var state = Seq[Operation]()
-
   var slotNum = 1L
 
-  var proposals = Map[Long, Proposal]()
+  var state :S = startState
 
-  var decisions = Map[Long, Command]()
+  var proposals = Map[Long, Proposal[E]]()
 
-  def propose(p: Command) {
+  var decisions = Map[Long, Command[E]]()
+
+  def propose(p: Command[E]) {
 
     if (!alreadyDecided(p, slotNum)) {
       maxSeenSoFar = maxSeenSoFar + 1L
@@ -30,34 +32,28 @@ class Replica(val numLeaders: Int) extends Actor with ActorLogging {
 
   var maxSeenSoFar = 0L
 
-  def alreadyDecided(command: Command, slotNo: Long) = decisions.contains(slotNo)
+  def alreadyDecided(command: Command[E], slotNo: Long) = decisions.contains(slotNo)
 
-  private def performAndIncrement(slot: Long, p: Command): Long = {
+  private def performAndIncrement(slot: Long, p: Command[E]): Long = {
     log.debug("Performing {} on {}", p, slot)
     decisions.find {
-      case (s: Long, c: Command) => c == p && s < slot
+      case (s: Long, c: Command[E]) => c == p && s < slot
     } match {
       case Some(_) => slot + 1L
       case None =>
         log.debug("Add state {}", p.op)
-        val result = p.op.execute
-        state = state :+ p.op
-        sendReply(p.k, Response(p.cid, result))
+        state = append(state, p.op)
+        //sendReply(p.k, Response(p.cid, result))
         slot + 1L
-
     }
   }
 
-  private def sendReply(dest: String, response: Response) {
-    //context.actorFor(dest) ! response
-
-  }
 
   def receive = LoggingReceive {
 
-    case Request(p) => propose(p)
+    case request :Request[E] => propose(request.p)
 
-    case d: Decision => {
+    case d: Decision[E] => {
 
       decisions = decisions + (d.s -> d.p)
       if (maxSeenSoFar < d.s) maxSeenSoFar = d.s
@@ -65,7 +61,7 @@ class Replica(val numLeaders: Int) extends Actor with ActorLogging {
       log.debug("Got decision {} current slot {}", d, slotNum)
 
 
-      @tailrec def loop(slot: Long, cmd: Option[Command]): Long = cmd match {
+      @tailrec def loop(slot: Long, cmd: Option[Command[E]]): Long = cmd match {
         case None => slot
         case Some(c) =>
           for (

@@ -2,39 +2,35 @@ package akkapaxos
 
 import akka.actor.ActorRef
 
-case class Operation(id: String) {
-  def execute = Result(id)
-}
-
 case class Result(id: String)
 
-case class Command(
+case class Command[O](
   k: String,
   cid: Long,
-  op: Operation
+  op: O
 )
 
-case class Request(p: Command)
+case class Request[E](p: Command[E])
 
-case class Proposal(s: Long, p: Command)
+case class Proposal[E](s: Long, p: Command[E])
 
-case class Decision(s: Long, p: Command)
+case class Decision[E](s: Long, p: Command[E])
 
 case class Response(cid: Long, result: Result)
 
-case class PValue(b: Ballot, s: Long, p: Command)
+case class PValue[E](b: Ballot, s: Long, p: Command[E])
 
 case class Phase1a(l: ActorRef, b: Ballot)
 
-case class Phase1b(l: ActorRef, b: Ballot, accepted: Option[PValue])
+case class Phase1b[E](l: ActorRef, b: Ballot, accepted: Option[PValue[E]])
 
-case class Phase2a(l: ActorRef, pValue: PValue)
+case class Phase2a[E](l: ActorRef, pValue: PValue[E])
 
 case class Phase2b(l: ActorRef, b: Ballot)
 
 case class Preempted(b: Ballot)
 
-case class Adopted(b: Ballot, pValues: Set[PValue]) {
+case class Adopted[E](b: Ballot, pValues: Set[PValue[E]]) {
   override def toString = s"b:$b, pValues.size:${pValues.size}"
 }
 

@@ -3,6 +3,7 @@ package akkapaxos
 import akka.actor.{ActorLogging, Actor}
 import akka.event.LoggingReceive
 import scala.annotation.tailrec
+import scala.collection.SortedMap
 
 class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
 
@@ -16,7 +17,15 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
 
   var proposals = Map[Long, Proposal[E]]()
 
-  var decisions = Map[Long, Command[E]]()
+  var decisionMap = SortedMap[Long, Command[E]]()
+  var decisionSet = Map[Command[E], Set[Long]]()
+
+  def addDecision(d: Decision[E]) {
+    decisionMap = decisionMap + (d.s -> d.p)
+    val slots = decisionSet.getOrElse(d.p, Set())
+
+    decisionSet = decisionSet + (d.p -> (slots + d.s))
+  }
 
   def propose(p: Command[E]) {
 
@@ -32,18 +41,16 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
 
   var maxSeenSoFar = 0L
 
-  def alreadyDecided(command: Command[E], slotNo: Long) = decisions.contains(slotNo)
+  def alreadyDecided(command: Command[E], slotNo: Long) = decisionMap.contains(slotNo)
 
   private def performAndIncrement(slot: Long, p: Command[E]): Long = {
     log.debug("Performing {} on {}", p, slot)
-    decisions.find {
-      case (s: Long, c: Command[E]) => c == p && s < slot
-    } match {
-      case Some(_) => slot + 1L
-      case None =>
+    decisionSet.get(p) match {
+      case Some(slots) if !slots.exists(_ < slot) =>
         log.debug("Add state {}", p.op)
         state = append(state, p.op)
-        //sendReply(p.k, Response(p.cid, result))
+        slot + 1L
+      case _ =>
         slot + 1L
     }
   }
@@ -55,11 +62,10 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
 
     case d: Decision[E] => {
 
-      decisions = decisions + (d.s -> d.p)
+      addDecision(d)
       if (maxSeenSoFar < d.s) maxSeenSoFar = d.s
 
       log.debug("Got decision {} current slot {}", d, slotNum)
-
 
       @tailrec def loop(slot: Long, cmd: Option[Command[E]]): Long = cmd match {
         case None => slot
@@ -69,11 +75,11 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
           ) yield propose(p2)
 
           val newSlotNum = performAndIncrement(slot, c)
-          loop(newSlotNum, decisions.get(newSlotNum))
+          loop(newSlotNum, decisionMap.get(newSlotNum))
       }
 
 
-      slotNum = loop(slotNum, decisions.get(slotNum))
+      slotNum = loop(slotNum, decisionMap.get(slotNum))
 
     }
 

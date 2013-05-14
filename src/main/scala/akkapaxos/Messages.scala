@@ -4,10 +4,10 @@ import akka.actor.ActorRef
 
 case class Result(id: String)
 
-case class Command[O](
+case class Command[E](
   k: String,
   cid: Long,
-  op: O
+  op: E
 )
 
 case class Request[E](p: Command[E])
@@ -15,8 +15,6 @@ case class Request[E](p: Command[E])
 case class Proposal[E](s: Long, p: Command[E])
 
 case class Decision[E](s: Long, p: Command[E])
-
-case class Response(cid: Long, result: Result)
 
 case class PValue[E](b: Ballot, s: Long, p: Command[E])
 

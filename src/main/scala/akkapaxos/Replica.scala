@@ -5,20 +5,22 @@ import akka.event.LoggingReceive
 import scala.annotation.tailrec
 import scala.collection.SortedMap
 
-class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
+class Replica[S, E](val numLeaders: Int) extends Actor with ActorLogging {
 
   this: DistributedState[S, E] =>
 
   lazy val leaders = (0 until numLeaders).map(i => context.actorFor("../leader-" + i)).toSet
 
-  var slotNum = 1L
+  var state: S = startState
 
-  var state :S = startState
+  var slotNum = 1L
 
   var proposals = Map[Long, Proposal[E]]()
 
   var decisionMap = SortedMap[Long, Command[E]]()
   var decisionSet = Map[Command[E], Set[Long]]()
+
+  var maxSeenSoFar = 0L
 
   def addDecision(d: Decision[E]) {
     decisionMap = decisionMap + (d.s -> d.p)
@@ -39,26 +41,13 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
     }
   }
 
-  var maxSeenSoFar = 0L
 
   def alreadyDecided(command: Command[E], slotNo: Long) = decisionMap.contains(slotNo)
-
-  private def performAndIncrement(slot: Long, p: Command[E]): Long = {
-    log.debug("Performing {} on {}", p, slot)
-    decisionSet.get(p) match {
-      case Some(slots) if !slots.exists(_ < slot) =>
-        log.debug("Add state {}", p.op)
-        state = append(state, p.op)
-        slot + 1L
-      case _ =>
-        slot + 1L
-    }
-  }
 
 
   def receive = LoggingReceive {
 
-    case request :Request[E] => propose(request.p)
+    case request: Request[E] => propose(request.p)
 
     case d: Decision[E] => {
 
@@ -67,19 +56,11 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
 
       log.debug("Got decision {} current slot {}", d, slotNum)
 
-      @tailrec def loop(slot: Long, cmd: Option[Command[E]]): Long = cmd match {
-        case None => slot
-        case Some(c) =>
-          for (
-            Proposal(_, p2) <- proposals.get(slot) if p2 != c
-          ) yield propose(p2)
-
-          val newSlotNum = performAndIncrement(slot, c)
-          loop(newSlotNum, decisionMap.get(newSlotNum))
-      }
+      val (newSlotNum, newState) = updateState(slotNum, decisionMap.get(slotNum), state)
 
 
-      slotNum = loop(slotNum, decisionMap.get(slotNum))
+      slotNum = newSlotNum
+      state = newState
 
     }
 
@@ -87,4 +68,29 @@ class Replica[S,E](val numLeaders: Int) extends Actor with ActorLogging {
 
   }
 
+
+  @tailrec private def updateState(slot: Long, cmd: Option[Command[E]], st: S): (Long, S) = cmd match {
+    case None => (slot, st)
+    case Some(c) =>
+
+      replayProposals(slot, c, proposals)
+
+      val (newSlotNum, newState) = decisionSet.get(c) match {
+        case Some(slots) if !slots.exists(_ < slot) =>
+          log.debug("Applying event {}", c.op)
+          (slot + 1L, append(st, c.op))
+        case _ =>
+          (slot + 1L, st)
+      }
+
+      updateState(newSlotNum, decisionMap.get(newSlotNum), newState)
+  }
+
+
+  def replayProposals(slot: Long, c: Command[E], props: Map[Long, Proposal[E]]) {
+    props.get(slot) match {
+      case Some(Proposal(_, c2)) if c2 != c => propose(c2)
+      case _ => // do nothing
+    }
+  }
 }

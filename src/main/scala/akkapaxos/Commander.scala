@@ -42,6 +42,8 @@ object Commander {
 
   case class WaitFor(acceptors: Set[ActorRef]) {
     def -(acceptor: ActorRef) = copy(acceptors - acceptor)
+
+    override lazy val toString = s"acceptors.size=${acceptors.size}"
   }
 
 }

@@ -29,7 +29,7 @@ case class Phase2b(l: ActorRef, b: Ballot)
 case class Preempted(b: Ballot)
 
 case class Adopted[E](b: Ballot, pValues: Set[PValue[E]]) {
-  override def toString = s"b:$b, pValues.size:${pValues.size}"
+  override lazy val toString = s"b:$b, pValues.size:${pValues.size}"
 }
 
 case class BallotNumber(leader: Int, number: Long)  extends Ordered[BallotNumber] {
@@ -41,7 +41,7 @@ case class BallotNumber(leader: Int, number: Long)  extends Ordered[BallotNumber
 
   def increment = copy(number = number + 1)
 
-  override def toString = s"$number-$leader"
+  override lazy val toString = s"$number-$leader"
 }
 
 case class Ballot(ballotNumber: BallotNumber, l: ActorRef) extends Ordered[Ballot] {

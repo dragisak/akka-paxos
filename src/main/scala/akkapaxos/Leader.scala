@@ -23,7 +23,7 @@ class Leader[E](
       stay using (data + prop)
 
 
-    case Event(adopted :Adopted[E], data) =>
+    case Event(adopted: Adopted[E], data) =>
 
       val props: Map[Long, Proposal[E]] = combine(data.proposals, adopted.pValues)
 
@@ -53,7 +53,7 @@ class Leader[E](
   }
 
   whenUnhandled {
-    case m =>
+    case Event(m, _) =>
       log.debug("Ignoring {}", m)
       stay()
   }
@@ -103,7 +103,7 @@ case class LeaderData[E](ballot: Ballot, proposals: Map[Long, Proposal[E]]) {
 
   def contains(slot: Long): Boolean = proposals.contains(slot)
 
-  override def toString = s"Ballot: $ballot, proposal.length:${proposals.size}"
+  override lazy val toString = s"Ballot: $ballot, proposal.length:${proposals.size}"
 }
 
 

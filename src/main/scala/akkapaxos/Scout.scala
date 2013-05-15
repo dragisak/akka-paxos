@@ -44,7 +44,7 @@ object Scout {
 
     def -(a: ActorRef): ScoutData[E] = copy(waitFor = waitFor - a)
 
-    override def toString = s"waitFo:$waitFor, pBalues.size:${pValues.size}"
+    override lazy val toString = s"waitFo:$waitFor, pBalues.size:${pValues.size}"
   }
 
 }

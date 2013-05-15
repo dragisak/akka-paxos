@@ -44,7 +44,9 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
 
       Thread.sleep(100)
 
-      for (i <- 0 until messages) {
+      val messageRange = 0 until messages
+
+      for (i <- messageRange) {
         val req = Request[Int](Command("yo", i, i))
         replicas.foreach(_ ! req)
       }
@@ -56,6 +58,8 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
       val s = res.map(_.state).toSet
 
       s.size must be(1)
+
+      s.head.toSet must be(messageRange.toSet)
 
     }
   }

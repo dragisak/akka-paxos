@@ -36,6 +36,9 @@ class Leader[E](
       spawnScout(ballotNum)
       stay using LeaderData(ballotNum, data.proposals)
 
+    case Event(Decision(slot,_), data) =>
+      stay using data.copy(proposals = data.proposals - slot)
+
   }
 
   when(Active) {
@@ -49,6 +52,9 @@ class Leader[E](
       val ballotNum = data.ballot.increment
       spawnScout(ballotNum)
       goto(Waiting) using LeaderData(ballotNum, data.proposals)
+
+    case Event(Decision(slot,_), data) =>
+      stay using data.copy(proposals = data.proposals - slot)
 
   }
 

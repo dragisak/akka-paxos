@@ -21,7 +21,9 @@ class Commander[E](
       val newState = waitFor - a
       if (newState.acceptors.size < acceptors.size / 2) {
         log.debug("Reached consensus on {}", pValue)
-        replicas.foreach(_ ! Decision(pValue.s, pValue.p))
+        val decision = Decision(pValue.s, pValue.p)
+        replicas.foreach(_ ! decision)
+        context.parent ! decision // let leader know that decision has been reached
         stop()
       } else {
         stay using newState

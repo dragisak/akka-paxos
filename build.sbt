@@ -4,7 +4,7 @@ name := "akka-paxos"
 
 version := "0.3.0"
 
-scalaVersion := "2.10.1"
+scalaVersion := "2.10.2"
 
 libraryDependencies ++= Seq(
         "com.typesafe.akka" %%  "akka-actor"       % "2.2.0-RC1",

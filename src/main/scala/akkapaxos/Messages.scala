@@ -5,9 +5,9 @@ import akka.actor.ActorRef
 case class Result(id: String)
 
 case class Command[E](
-  k: String,
-  cid: Long,
-  op: E
+  client   : ActorRef,
+  cid      : Long,
+  op       : E
 )
 
 case class Request[E](p: Command[E])

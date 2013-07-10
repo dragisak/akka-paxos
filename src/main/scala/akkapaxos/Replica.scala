@@ -9,7 +9,7 @@ class Replica[S, E](val numLeaders: Int) extends Actor with ActorLogging {
 
   this: DistributedState[S, E] =>
 
-  lazy val leaders = (0 until numLeaders).map(i => context.actorFor("../leader-" + i)).toSet
+  lazy val leaders = (0 until numLeaders).map(i => context.actorSelection("../leader-" + i)).toSet
 
   var state: S = startState
 

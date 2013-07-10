@@ -13,6 +13,7 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
   def this() = this(ActorSystem("AkkaPaxosSpec"))
 
   val messages = 10000
+  val numReplicas = 7
 
   override def afterAll() {
     system.shutdown()
@@ -30,24 +31,20 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
     }
   }
 
-  "all replicas" must {
-    "receive all messages in same order" in {
-      val crashes = 6
+  s"all $numReplicas replicas" must {
+    s"receive all $messages messages in the same order" in {
 
-      val numReplicas = crashes + 1
-      val numLeaders = 5
-      val numAcceptors = crashes * 2 + 1
 
-      val acceptors = (for (i <- 0 until numAcceptors) yield (system.actorOf(Props[Acceptor[Int]], name = s"acceptor-$i"))).toSet
-      val replicas = (for (i <- 0 until numReplicas) yield (system.actorOf(Props(new Replica[Seq[Int], Int](numLeaders) with MyState), name = s"replica-$i"))).toSet
-      val leaders = for (i <- 0 until numLeaders) yield (system.actorOf(Props(new Leader[Int](i, acceptors, replicas)), name = s"leader-$i"))
+      val acceptors = (for (i <- 0 until numReplicas) yield system.actorOf(Props[Acceptor[Int]], name = s"acceptor-$i")).toSet
+      val replicas = (for (i <- 0 until numReplicas) yield system.actorOf(Props(new Replica[Seq[Int], Int](numReplicas) with MyState), name = s"replica-$i")).toSet
+      val leaders = for (i <- 0 until numReplicas) yield system.actorOf(Props(new Leader[Int](i, acceptors, replicas)), name = s"leader-$i")
 
       Thread.sleep(100)
 
       val messageRange = 0 until messages
 
       for (i <- messageRange) {
-        val req = Request[Int](Command("yo", i, i))
+        val req = Request[Int](Command(self, i, i))
         replicas.foreach(_ ! req)
       }
 

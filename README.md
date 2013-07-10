@@ -6,5 +6,6 @@ This is a simplistic implementation of [Paxos](http://en.wikipedia.org/wiki/Paxo
 as described in [Paxos Made Moderately Complex (pdf)](http://www.cs.cornell.edu/courses/cs7412/2011sp/paxos.pdf)
 
 
-To build: `sbt compile`
+To build: `sbt test`
 
+See test classes for examples how to use.

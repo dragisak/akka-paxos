@@ -7,6 +7,28 @@ import org.scalatest.WordSpec
 import org.scalatest.matchers.MustMatchers
 import org.scalatest.BeforeAndAfterAll
 
+case class Finished(state: Seq[Int])
+
+trait MyState extends DistributedState[Seq[Int], Int] {
+
+  val messages: Int
+
+  val me :ActorRef
+
+  override def startState = Seq()
+
+  override def append(state: => Seq[Int], event: Int) = {
+    val newState = state :+ event
+    if (newState.size >= messages) me ! Finished(newState)
+    newState
+  }
+}
+
+private class TestReplica(leaders: Int, messageCnt: Int, myself: ActorRef) extends Replica[Seq[Int], Int](leaders) with MyState {
+  override val messages = messageCnt
+  override val me = myself
+}
+
 class AkkaPaxosSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
 with WordSpec with MustMatchers with BeforeAndAfterAll {
 
@@ -19,25 +41,13 @@ with WordSpec with MustMatchers with BeforeAndAfterAll {
     system.shutdown()
   }
 
-  case class Finished(state: Seq[Int])
-
-  trait MyState extends DistributedState[Seq[Int], Int] {
-    override def startState = Seq()
-
-    override def append(state: => Seq[Int], event: Int) = {
-      val newState = state :+ event
-      if (newState.size >= messages) self ! Finished(newState)
-      newState
-    }
-  }
 
   s"all $numReplicas replicas" must {
     s"receive all $messages messages in the same order" in {
 
-
       val acceptors = (for (i <- 0 until numReplicas) yield system.actorOf(Props[Acceptor[Int]], name = s"acceptor-$i")).toSet
-      val replicas = (for (i <- 0 until numReplicas) yield system.actorOf(Props(new Replica[Seq[Int], Int](numReplicas) with MyState), name = s"replica-$i")).toSet
-      val leaders = for (i <- 0 until numReplicas) yield system.actorOf(Props(new Leader[Int](i, acceptors, replicas)), name = s"leader-$i")
+      val replicas = (for (i <- 0 until numReplicas) yield system.actorOf(Props(classOf[TestReplica], numReplicas, messages, self), name = s"replica-$i")).toSet
+      val leaders = for (i <- 0 until numReplicas) yield system.actorOf(Props(classOf[Leader[Int]], i, acceptors, replicas), name = s"leader-$i")
 
       Thread.sleep(100)
 

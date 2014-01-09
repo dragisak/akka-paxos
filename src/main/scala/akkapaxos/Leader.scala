@@ -66,11 +66,11 @@ class Leader[E](
 
 
   private def spawnCommander[E](pVal: PValue[E]) {
-    context.actorOf(Props(new Commander(acceptors, replicas, pVal)), name = s"commander-${pVal.b.ballotNumber}-${pVal.s}")
+    context.actorOf(Props(classOf[Commander[E]], acceptors, replicas, pVal), name = s"commander-$id-${pVal.b.ballotNumber}-${pVal.s}")
   }
 
   private def spawnScout(b: Ballot) {
-    context.actorOf(Props(new Scout(acceptors, b)), name = s"scout-${b.ballotNumber}")
+    context.actorOf(Props(classOf[Scout[E]], acceptors, b), name = s"scout-$id-${b.ballotNumber}")
   }
 
 

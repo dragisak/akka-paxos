@@ -5,6 +5,8 @@ import scala.concurrent.duration._
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest._
 
+import scala.util.Random
+
 case class Finished(state: Seq[Int])
 
 trait MyState extends DistributedState[Seq[Int], Int] {
@@ -53,18 +55,19 @@ with WordSpecLike with MustMatchers with BeforeAndAfterAll {
 
       for (i <- messageRange) {
         val req = Request[Int](Command(self, i, i))
-        replicas.foreach(_ ! req)
+        // Pick random nodes from list of replicas
+        Random.shuffle(replicas).take(2).foreach(_ ! req)
       }
 
       val res = receiveN(numReplicas, 60 seconds).asInstanceOf[Seq[Finished]]
 
-      res.size must be(numReplicas)
-      res.head.state.size must be(messages)
+      res must have size numReplicas
+      res.head.state must have size messages
       val s = res.map(_.state).toSet
 
-      s.size must be(1)
+      s must have size 1
 
-      s.head.toSet must be(messageRange.toSet)
+      s.head.toSet === messageRange.toSet
 
     }
   }

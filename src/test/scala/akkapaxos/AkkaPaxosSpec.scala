@@ -3,9 +3,7 @@ package akkapaxos
 import akka.actor._
 import scala.concurrent.duration._
 import akka.testkit.{ImplicitSender, TestKit}
-import org.scalatest.WordSpec
-import org.scalatest.matchers.MustMatchers
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest._
 
 case class Finished(state: Seq[Int])
 
@@ -30,7 +28,7 @@ private class TestReplica(leaders: Int, messageCnt: Int, myself: ActorRef) exten
 }
 
 class AkkaPaxosSpec(_system: ActorSystem) extends TestKit(_system) with ImplicitSender
-with WordSpec with MustMatchers with BeforeAndAfterAll {
+with WordSpecLike with MustMatchers with BeforeAndAfterAll {
 
   def this() = this(ActorSystem("AkkaPaxosSpec"))
 

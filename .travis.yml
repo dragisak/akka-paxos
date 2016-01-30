@@ -1,2 +1,10 @@
 language: scala
-scala: 2.11.6
+scala:
+  - 2.11.7
+jdk:
+  - oraclejdk8
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION coverage test
+after_success:
+  - sbt ++$TRAVIS_SCALA_VERSION coverageReport
+  - sbt ++$TRAVIS_SCALA_VERSION codacyCoverage

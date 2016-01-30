@@ -35,8 +35,8 @@ case class Adopted[E](b: Ballot, pValues: Set[PValue[E]]) {
 case class BallotNumber(leader: Int, number: Long)  extends Ordered[BallotNumber] {
 
   override def compare(that: BallotNumber) = (this.number - that.number) match {
-    case 0l   ⇒ this.leader - that.leader
-    case x    ⇒ x.toInt
+    case 0l   => this.leader - that.leader
+    case x    => x.toInt
   }
 
   def increment = copy(number = number + 1)

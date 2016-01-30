@@ -4,7 +4,7 @@ name := "akka-paxos"
 
 version := "0.5.0"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.11.7"
 
 val akkaVersion = "2.3.9"
 

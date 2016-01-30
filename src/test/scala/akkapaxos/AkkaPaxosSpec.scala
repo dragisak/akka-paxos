@@ -38,7 +38,7 @@ with WordSpecLike with MustMatchers with BeforeAndAfterAll {
   val numReplicas = 7
 
   override def afterAll() {
-    system.shutdown()
+    TestKit.shutdownActorSystem(system)
   }
 
 

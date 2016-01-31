@@ -59,7 +59,7 @@ with WordSpecLike with MustMatchers with BeforeAndAfterAll {
         Random.shuffle(replicas).take(2).foreach(_ ! req)
       }
 
-      val res = receiveN(numReplicas, 2 minutes).asInstanceOf[Seq[Finished]]
+      val res = receiveN(numReplicas, 4 minutes).asInstanceOf[Seq[Finished]]
 
       res must have size numReplicas
       res.head.state must have size messages
